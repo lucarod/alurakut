@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 // import styled from 'styled-components'
 import MainGrid from '../src/components/MainGrid'
 import Box from '../src/components/Box'
@@ -24,6 +24,29 @@ function ProfileSidebar({ githubUser }) {
   )
 }
 
+function ProfileRelationsBox({ title, items }) {
+  return (
+    <ProfileRelationsBoxWrapper>
+      <h2 className="smallTitle">
+        {title} ({items.length}):
+      </h2>
+
+      {/* <ul>
+        {followers.map((follower) => {
+          return (
+            <li key={follower}>
+              <a href={`/users/${follower}`} key={follower}>
+                <img src={`https://github.com/${follower}.png`} alt="Avatar" />
+                <span>{follower}</span>
+              </a>
+            </li>
+          )
+        })}
+      </ul> */}
+    </ProfileRelationsBoxWrapper>
+  )
+}
+
 export default function Home() {
   const userName = 'lucarod'
 
@@ -41,6 +64,14 @@ export default function Home() {
     'marcobrunodev',
     'felipefialho'
   ]
+
+  const [followers, setFollowers] = useState([])
+  
+  useEffect(async () => {
+    const response = await fetch(`https://api.github.com/users/${userName}/followers`)
+    const fullFilledFollowers = await response.json()
+    setFollowers(fullFilledFollowers)
+  }, [])
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -93,6 +124,7 @@ export default function Home() {
           </Box>
         </div>
         <div className="relationship-area" style={{ gridArea: 'relationship-area' }}>
+          <ProfileRelationsBox title="Seguidores" items={followers} />
           <ProfileRelationsBoxWrapper>
             <h2 className="smallTitle">
               Pessoas da Comunidade ({favoritePeople.length}):
