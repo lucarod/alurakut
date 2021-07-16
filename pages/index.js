@@ -1,27 +1,35 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 // import styled from 'styled-components'
-import MainGrid from '../src/components/MainGrid'
-import Box from '../src/components/Box'
-import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/AlurakutCommons'
-import { ProfileRelationsBoxWrapper } from '../src/components/ProfileRelationship'
+import MainGrid from "../src/components/MainGrid";
+import Box from "../src/components/Box";
+import {
+  AlurakutMenu,
+  AlurakutProfileSidebarMenuDefault,
+  OrkutNostalgicIconSet,
+} from "../src/lib/AlurakutCommons";
+import { ProfileRelationsBoxWrapper } from "../src/components/ProfileRelationship";
 
 function ProfileSidebar({ githubUser }) {
   return (
     <Box as="aside">
-      <img src={`https://github.com/${githubUser}.png`} alt="Avatar" style={{ borderRadius: '8px' }}/>
-      <hr/>
-      
+      <img
+        src={`https://github.com/${githubUser}.png`}
+        alt="Avatar"
+        style={{ borderRadius: "8px" }}
+      />
+      <hr />
+
       <p>
         <a className="boxLink" href={`https://github.com/${githubUser}`}>
           @{githubUser}
         </a>
       </p>
 
-      <hr/>
+      <hr />
 
-      <AlurakutProfileSidebarMenuDefault/>
+      <AlurakutProfileSidebarMenuDefault />
     </Box>
-  )
+  );
 }
 
 function ProfileRelationsBox({ title, items }) {
@@ -44,86 +52,120 @@ function ProfileRelationsBox({ title, items }) {
         })}
       </ul> */}
     </ProfileRelationsBoxWrapper>
-  )
+  );
 }
 
 export default function Home() {
-  const userName = 'lucarod'
+  const userName = "lucarod";
 
-  const [communities, setCommunities] = useState([{
-    id: '2489127421759125',
-    title: 'Eu odeio acordar cedo',
-    image: 'https://alurakut.vercel.app/capa-comunidade-01.jpg'
-  }])
+  const [followers, setFollowers] = useState([]);
+  const [communities, setCommunities] = useState([]);
 
   const favoritePeople = [
-    'juunegreiros', 
-    'omariosouto', 
-    'peas', 
-    'rafaballerini',
-    'marcobrunodev',
-    'felipefialho'
-  ]
+    "juunegreiros",
+    "omariosouto",
+    "peas",
+    "rafaballerini",
+    "marcobrunodev",
+    "felipefialho",
+  ];
 
-  const [followers, setFollowers] = useState([])
-  
+
   useEffect(async () => {
-    const response = await fetch(`https://api.github.com/users/${userName}/followers`)
-    const fullFilledFollowers = await response.json()
-    setFollowers(fullFilledFollowers)
-  }, [])
+    const responseFollowers = await fetch(
+      `https://api.github.com/users/${userName}/followers`
+    );
+    const fullFilledFollowers = await responseFollowers.json();
+    setFollowers(fullFilledFollowers);
+
+    const responseCommunities = await fetch(`https://graphql.datocms.com/`, {
+      method: "POST",
+      headers: {
+        Authorization: "e2fdc8a3f7804bcb41b556f107fdfe",
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: `query {
+          allCommunities {
+            id
+            title
+            imageUrl
+            creatorSlug
+          }
+        }`,
+      }),
+    });
+
+    const fullFilledCommunities = await responseCommunities.json()
+    const newCommunities = fullFilledCommunities.data.allCommunities
+    setCommunities(newCommunities)
+  }, []);
 
   function handleSubmit(event) {
-    event.preventDefault()
-    const formData = new FormData(event.target)
+    event.preventDefault();
+    const formData = new FormData(event.target);
     const community = {
-      id: new Date().toISOString(),
-      title: formData.get('title'),
-      image: formData.get('image'),
-    }
-    const updatedCommunities = [...communities, community]
-    setCommunities(updatedCommunities)
+      title: formData.get("title"),
+      imageUrl: formData.get("image"),
+      creatorSlug: userName,
+    };
+
+    fetch('/api/communities', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(community)
+    })
+    .then(async (response) => {
+      const data = await response.json()
+      const newCommunity = data.createdRecord
+      const updatedCommunities = [...communities, newCommunity];
+      setCommunities(updatedCommunities);
+    })
   }
 
   return (
     <>
-      <AlurakutMenu githubUser={userName}/>
+      <AlurakutMenu githubUser={userName} />
       <MainGrid>
-        <div className="profile-area" style={{ gridArea: 'profile-area' }}>
-          <ProfileSidebar githubUser={userName}/>
+        <div className="profile-area" style={{ gridArea: "profile-area" }}>
+          <ProfileSidebar githubUser={userName} />
         </div>
-        <div className="welcome-area" style={{ gridArea: 'welcome-area' }}>
+        <div className="welcome-area" style={{ gridArea: "welcome-area" }}>
           <Box>
             <h1 className="title">Bem-vindo(a)</h1>
-            <OrkutNostalgicIconSet/>
+            <OrkutNostalgicIconSet />
           </Box>
 
           <Box>
             <h2 className="subTitle">O que você deseja fazer?</h2>
             <form onSubmit={(e) => handleSubmit(e)}>
               <div>
-                <input 
-                  type="text" 
-                  placeholder="Qual vai ser o nome da sua comunidade?" 
-                  name="title" 
+                <input
+                  type="text"
+                  placeholder="Qual vai ser o nome da sua comunidade?"
+                  name="title"
                   aria-label="Qual vai ser o nome da sua comunidade"
-                  />
+                />
               </div>
               <div>
-                <input 
-                  type="text" 
-                  placeholder="Coloque uma URL para usar de capa" 
-                  name="image" 
+                <input
+                  type="text"
+                  placeholder="Coloque uma URL para usar de capa"
+                  name="image"
                   aria-label="Coloque uma URL para usar de capa"
-                  />
+                />
               </div>
-              <button>
-                Criar comunidade
-              </button>
+              <button>Criar comunidade</button>
             </form>
           </Box>
         </div>
-        <div className="relationship-area" style={{ gridArea: 'relationship-area' }}>
+        <div
+          className="relationship-area"
+          style={{ gridArea: "relationship-area" }}
+        >
           <ProfileRelationsBox title="Seguidores" items={followers} />
           <ProfileRelationsBoxWrapper>
             <h2 className="smallTitle">
@@ -135,34 +177,35 @@ export default function Home() {
                 return (
                   <li key={person}>
                     <a href={`/users/${person}`} key={person}>
-                      <img src={`https://github.com/${person}.png`} alt="Avatar" />
+                      <img
+                        src={`https://github.com/${person}.png`}
+                        alt="Avatar"
+                      />
                       <span>{person}</span>
                     </a>
                   </li>
-                )
+                );
               })}
             </ul>
           </ProfileRelationsBoxWrapper>
           <ProfileRelationsBoxWrapper>
-            <h2 className="smallTitle">
-              Comunidades ({communities.length}):
-            </h2>
+            <h2 className="smallTitle">Comunidades ({communities.length}):</h2>
 
             <ul>
               {communities.map((community) => {
                 return (
                   <li key={community.id}>
-                    <a href={`/users/${community.title}`}>
-                      <img src={community.image} alt="Avatar" />
+                    <a href={`/communities/${community.id}`}>
+                      <img src={community.imageUrl} alt="Avatar" />
                       <span>{community.title}</span>
                     </a>
                   </li>
-                )
+                );
               })}
             </ul>
           </ProfileRelationsBoxWrapper>
         </div>
       </MainGrid>
     </>
-  )
+  );
 }
