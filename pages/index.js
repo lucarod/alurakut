@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import nookies from 'nookies'
+import jwt from 'jsonwebtoken'
 // import styled from 'styled-components'
 import MainGrid from "../src/components/MainGrid";
 import Box from "../src/components/Box";
@@ -55,8 +57,8 @@ function ProfileRelationsBox({ title, items }) {
   );
 }
 
-export default function Home() {
-  const userName = "lucarod";
+export default function Home({ githubUser }) {
+  const userName = githubUser;
 
   const [followers, setFollowers] = useState([]);
   const [communities, setCommunities] = useState([]);
@@ -141,7 +143,7 @@ export default function Home() {
 
           <Box>
             <h2 className="subTitle">O que você deseja fazer?</h2>
-            <form onSubmit={(e) => handleSubmit(e)}>
+            <form onSubmit={handleSubmit}>
               <div>
                 <input
                   type="text"
@@ -208,4 +210,33 @@ export default function Home() {
       </MainGrid>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  const cookies = nookies.get(context);
+  const token = cookies.USER_TOKEN
+  
+  const { isAuthenticated } = await fetch("https://alurakut-blue.vercel.app/api/auth", {
+    headers: {
+      Authorization: token,
+    },
+  })
+  .then((resposta) => resposta.json())
+  
+  if(!isAuthenticated) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      }
+    }
+  }
+  
+  const { githubUser } = jwt.decode(token)
+
+  return {
+    props: {
+      githubUser
+    },
+  }
 }
