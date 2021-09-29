@@ -1,3 +1,3 @@
 # Alurakut
 
-Project running: alurakut-blue.vercel.app
+Project running: https://alurakut-blue.vercel.app/login
